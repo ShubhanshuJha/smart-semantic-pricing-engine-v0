@@ -1,0 +1,8 @@
+supplier: manomano
+url: "https://www.manomano.fr/"
+
+output:
+  directory: data/
+  min_products: 20  ### Controls the no. of products data to be fetched
+
+rate_limit_seconds: [0.5, 1.2]
