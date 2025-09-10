@@ -1,14 +1,14 @@
 supplier: castorama
 url: "https://www.castorama.fr/"
 
-## OR
-sitemap_urls:
-  - "https://www.castorama.fr/fstrz/sm/sitemap-prd.xml"
-  - "https://www.castorama.fr/fstrz/sm/sitemap-prd2.xml"
-  - "https://www.castorama.fr/fstrz/sm/sitemap-mkp.xml"
+# ### OR
+# sitemap_urls:
+#   - "https://www.castorama.fr/fstrz/sm/sitemap-prd.xml"
+#   - "https://www.castorama.fr/fstrz/sm/sitemap-prd2.xml"
+#   - "https://www.castorama.fr/fstrz/sm/sitemap-mkp.xml"
 
 output:
   directory: data/
-  min_products: 20  ### Controls the no. of products data to be fetched
+  min_products: 5  ### Controls the no. of products data to be fetched
 
 rate_limit_seconds: [0.5, 1.2]

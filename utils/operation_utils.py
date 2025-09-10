@@ -1,6 +1,6 @@
 import functools
 import time
-import yaml
+import yaml, json
 from pathlib import Path
 
 
@@ -37,4 +37,11 @@ def load_yaml_config(path: str):
     if not p.exists():
         raise FileNotFoundError(f"Config not found: {path}")
     return yaml.safe_load(p.read_text(encoding="utf-8"))
+
+@retry(retries=2, delay=1)
+def write_json_data(data: list[dict], path: str):
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding="utf-8")
+    return out_path
 
