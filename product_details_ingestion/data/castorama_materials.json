@@ -1,0 +1,127 @@
+[
+    {
+        "product_id": "castorama|9973ebfa5ffd5b9353ab403f7b62776d",
+        "supplier": "castorama",
+        "updated_at": "2025-09-11T05:42:39.292112Z",
+        "category": null,
+        "product_name": "Carrelage sol et mur Nicole Beige 20 x 61 cm",
+        "brand": null,
+        "price": {
+            "amount": 12.95,
+            "currency": "EUR",
+            "price_type": "unit"
+        },
+        "measurement": {
+            "quantity": 61.0,
+            "unit": "cm"
+        },
+        "availability": "in_stock",
+        "url": "https://www.castorama.fr/carrelage-sol-et-mur-nicole-beige-20-x-61-cm/8435433506423_CAFR.prd",
+        "image_url": "https://media.castorama.fr/is/image/Castorama/carrelage-sol-et-mur-nicole-beige-20-x-61-cm~8435433506423_02c_FR_CF?$MOB_PREV$&$width=1200&$height=1200",
+        "variations": [],
+        "source": "https://www.castorama.fr/carrelage-sol-et-mur-nicole-beige-20-x-61-cm/8435433506423_CAFR.prd",
+        "raw": {
+            "price_str": "12,95 €"
+        }
+    },
+    {
+        "product_id": "castorama|cb0ed4851b5ee9f597329c8e3e38db5d",
+        "supplier": "castorama",
+        "updated_at": "2025-09-11T05:42:56.816409Z",
+        "category": null,
+        "product_name": "Carrelage sol et mur noir 30 x 60 cm Oikos",
+        "brand": null,
+        "price": {
+            "amount": 23.95,
+            "currency": "EUR",
+            "price_type": "unit"
+        },
+        "measurement": {
+            "quantity": 60.0,
+            "unit": "cm"
+        },
+        "availability": "in_stock",
+        "url": "https://www.castorama.fr/carrelage-sol-et-mur-noir-30-x-60-cm-oikos/8016609528854_CAFR.prd",
+        "image_url": "https://media.castorama.fr/is/image/Castorama/carrelage-sol-et-mur-noir-30-x-60-cm-oikos~8016609528854_01i?$MOB_PREV$&$width=1200&$height=1200",
+        "variations": [],
+        "source": "https://www.castorama.fr/carrelage-sol-et-mur-noir-30-x-60-cm-oikos/8016609528854_CAFR.prd",
+        "raw": {
+            "price_str": "23,95 €"
+        }
+    },
+    {
+        "product_id": "castorama|6d83d184277ce73ca11ff129eece53d0",
+        "supplier": "castorama",
+        "updated_at": "2025-09-11T05:43:06.286262Z",
+        "category": null,
+        "product_name": "Carrelage sol et mur noir brillant Mineral 60 x 120 cm",
+        "brand": null,
+        "price": {
+            "amount": 119.95,
+            "currency": "EUR",
+            "price_type": "unit"
+        },
+        "measurement": {
+            "quantity": 120.0,
+            "unit": "cm"
+        },
+        "availability": "in_stock",
+        "url": "https://www.castorama.fr/carrelage-sol-et-mur-noir-brillant-mineral-60-x-120-cm/8052109121195_CAFR.prd",
+        "image_url": "https://media.castorama.fr/is/image/Castorama/carrelage-sol-et-mur-noir-brillant-mineral-60-x-120-cm~8052109121195_01i_FR_CF?$MOB_PREV$&$width=1200&$height=1200",
+        "variations": [],
+        "source": "https://www.castorama.fr/carrelage-sol-et-mur-noir-brillant-mineral-60-x-120-cm/8052109121195_CAFR.prd",
+        "raw": {
+            "price_str": "119,95 €"
+        }
+    },
+    {
+        "product_id": "castorama|ccbf4423ee3145411160d3d0d3c8d96a",
+        "supplier": "castorama",
+        "updated_at": "2025-09-11T05:43:14.329819Z",
+        "category": null,
+        "product_name": "Carrelage sol et mur noir brillant Mineral 90 x 180 cm",
+        "brand": null,
+        "price": {
+            "amount": 129.95,
+            "currency": "EUR",
+            "price_type": "unit"
+        },
+        "measurement": {
+            "quantity": 180.0,
+            "unit": "cm"
+        },
+        "availability": "in_stock",
+        "url": "https://www.castorama.fr/carrelage-sol-et-mur-noir-brillant-mineral-90-x-180-cm/8052109121218_CAFR.prd",
+        "image_url": "https://media.castorama.fr/is/image/Castorama/carrelage-sol-et-mur-noir-brillant-mineral-90-x-180-cm~8052109121218_01i_FR_CF?$MOB_PREV$&$width=1200&$height=1200",
+        "variations": [],
+        "source": "https://www.castorama.fr/carrelage-sol-et-mur-noir-brillant-mineral-90-x-180-cm/8052109121218_CAFR.prd",
+        "raw": {
+            "price_str": "129,95 €"
+        }
+    },
+    {
+        "product_id": "castorama|a6b349dee119e269ccc82ebda007fe2d",
+        "supplier": "castorama",
+        "updated_at": "2025-09-11T05:43:21.435702Z",
+        "category": null,
+        "product_name": "Carrelage sol et mur noir brillant Mirroir 60 x 120 cm",
+        "brand": null,
+        "price": {
+            "amount": 119.95,
+            "currency": "EUR",
+            "price_type": "unit"
+        },
+        "measurement": {
+            "quantity": 120.0,
+            "unit": "cm"
+        },
+        "availability": "in_stock",
+        "url": "https://www.castorama.fr/carrelage-sol-et-mur-noir-brillant-mirroir-60-x-120-cm/8054111895514_CAFR.prd",
+        "image_url": "https://media.castorama.fr/is/image/Castorama/carrelage-sol-et-mur-noir-brillant-mirroir-60-x-120-cm~8054111895514_01i_FR_CF?$MOB_PREV$&$width=1200&$height=1200",
+        "variations": [],
+        "source": "https://www.castorama.fr/carrelage-sol-et-mur-noir-brillant-mirroir-60-x-120-cm/8054111895514_CAFR.prd",
+        "raw": {
+            "price_str": "119,95 €"
+        }
+    }
+]

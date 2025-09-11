@@ -26,16 +26,17 @@ class Scrapper:
         self.retry_count = int(config.get("retry_count", "3"))
         self.min_products = int(config.get("output", {}).get("min_products", "100"))
     
-    def __get_delay(self):
+    def __get_delay(self) -> float:
         return random.uniform(self.config["rate_limit_seconds"][0], self.config["rate_limit_seconds"][1])
     
-    def __delay(self):
+    def __delay(self) -> None:
         time.sleep(self.__get_delay())
 
     def __get_urls_from_sitemap(self, sitemap_url: str) -> list[str]:
         self.__delay()
         response = self.request.get_data(
             url=sitemap_url,
+            timeout=10,
             retries=self.retry_count,
             delay=self.__get_delay()
         )
@@ -47,17 +48,17 @@ class Scrapper:
                 if sitemap_index:
                     for sitemap in sitemap_index:
                         loc = sitemap.find("{http://www.sitemaps.org/schemas/sitemap/0.9}loc")
-                        if loc is not None:
+                        if loc:
                             child_urls = self.__get_urls_from_sitemap(loc.text) or []
                             urls.extend(child_urls)
                 else:
                     url_locs = root.findall(".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc")
                     urls.extend([elem.text for elem in url_locs if elem is not None])
-            except ET.ParseError as e:
-                print(f"(*) Failed to parse sitemap {sitemap_url}: {e}")
+            except ET.ParseError as ex:
+                print(f"(*) Failed to parse sitemap {sitemap_url}: {ex}")
         return urls
         
-    def __locate_product_sitemaps(self):
+    def __locate_product_sitemaps(self) -> list[str]:
         robots_url = urljoin(self.config["url"], "/robots.txt")
         print(f"(*) Robots.txt URL: {robots_url}")
         robots_url_response = self.request.get_data(url=robots_url, timeout=20, retries=self.retry_count, delay=self.__get_delay())
@@ -79,18 +80,8 @@ class Scrapper:
         all_prod_urls = list(set(all_urls))
         print(f"(*) Few of the product URLs :{all_prod_urls[:5]}")
         return all_prod_urls
-    
-    def parse_urlset(self, url):
-        """Return list of <loc> URLs from a sitemap (urlset)"""
-        resp = self.request.get_data(url=url, delay=self.__get_delay())
-        try:
-            root = ET.fromstring(resp.content)
-        except Exception as e:
-            raise RuntimeError(f"Failed parsing urlset XML {url}: {e}")
-        locs = [elem.text for elem in root.findall(".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
-        return locs
-    
-    def is_product_page(self, soup, url):
+        
+    def is_product_page(self, soup, url) -> bool:
         """
         Heuristics:
         - URL contains '.prd' or '/p/' or '/produit' or '/product'
@@ -111,18 +102,18 @@ class Scrapper:
 
         return False
     
-    def normalize_price(self, price_str):
+    def normalize_price(self, price_str) -> dict:
         """
         Normalize French price text to {amount, currency, price_type}.
         Handles: "29,90 €", "2,50 €/m²", "149 € / pack", "1 234,56 €"
         """
         if not price_str or not isinstance(price_str, str):
-            return None
+            return {}
         s = price_str.strip().replace("\xa0", " ").replace("\u202f", " ")
         # extract first numeric token
         m = re.search(r"([0-9\.\s,]+)", s)
         if not m:
-            return None
+            return {}
         token = m.group(1)
         # remove spaces and dots used as thousand separators, convert comma to dot
         token = token.replace(" ", "").replace("\u00A0", "")
@@ -134,7 +125,7 @@ class Scrapper:
         try:
             amount = float(token)
         except Exception:
-            return None
+            return {}
         currency = "EUR" if "€" in s else None
         if "m²" in s or "/m" in s:
             price_type = "per_m2"
@@ -144,7 +135,7 @@ class Scrapper:
             price_type = "unit"
         return {"amount": round(amount, 2), "currency": currency, "price_type": price_type}
 
-    def extract_measurement(self, text):
+    def extract_measurement(self, text) -> dict:
         if not text:
             return {}
         # look for unit patterns and a preceding number
@@ -159,7 +150,7 @@ class Scrapper:
             return {"quantity": qty_num, "unit": unit.lower()}
         return {}
 
-    def parse_product_page(self, url, guess_category=None):
+    def parse_product_page(self, url, guess_category=None) -> dict:
         """
         Fetch product URL and return structured dict per spec or None on failure.
         """
@@ -275,21 +266,20 @@ class Scrapper:
 
             # Basic validation: required fields
             if not product_name or not price or not url:
-                # Not a complete product: return None to let caller skip
-                return None
+                # Not a complete product: return empty dict to let caller skip
+                return {}
 
             return product
-
         except Exception as e:
             print(f"(*) Error in parse_product_page({url}) → {e}")
-            return None
+            return {}
     
-    def get_product_data(self, prod_url: str):
+    def get_product_data(self, prod_url: str) -> list[dict]:
         seen_urls = set()
         products = []
 
         print(f"(*) Exploring sitemap: {prod_url}")
-        locs = self.parse_urlset(prod_url)
+        locs = self.__get_urls_from_sitemap(sitemap_url=prod_url)
         print(f"(*) Sitemap {prod_url} contains {len(locs)} loc entries")
 
         # iterate each loc sequentially (for loop as you requested)
@@ -310,7 +300,7 @@ class Scrapper:
             try:
                 soup = BeautifulSoup(resp.text, "html.parser")
             except Exception as e:
-                print(f"[WARN] Failed parsing HTML for {loc}: {e}")
+                print(f"(*) Failed parsing HTML for {loc}: {e}")
                 continue
 
             if not self.is_product_page(soup, loc):
@@ -333,23 +323,23 @@ class Scrapper:
         unique = {}
         for p in products:
             unique[p["product_id"]] = p
-        return list(unique.values())        
+        return list(unique.values())
 
     def scrap_data(self) -> None:
-        prod_sitemaps = self.__locate_product_sitemaps()
-        print(f"Total {len(prod_sitemaps)} to explore.")
+        prod_sitemaps = self.config["sitemap_urls"] if "sitemap_urls" in self.config else self.__locate_product_sitemaps()
+        print(f"(*) Total {len(prod_sitemaps)} sitemaps to explore.")
         final_list = []
         for prod_sitemap in prod_sitemaps:
             final_list.extend(self.get_product_data(prod_url=prod_sitemap))
             if len(final_list) >= self.min_products:
                 print(f"(*) Product limit {self.min_products} reached... Stopping fetching process...")
                 break
-        file_name = f"{self.config['output']['path']}{self.config['supplier']}_materials.json"
+        file_name = f"../{self.config['output']['directory']}{self.config['supplier']}_materials.json"
         output_path = write_json_data(data=final_list, path=file_name)
         print(f"✅ Scraped {len(final_list)} products -> {output_path}")
 
 
-def main():
+def main() -> None:
     ### castorama, leroy_merlin, manomano
     supplier_name = "castorama"
     config_path = f"../configs/{supplier_name}.yaml"
