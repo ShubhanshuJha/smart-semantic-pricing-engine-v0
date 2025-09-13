@@ -98,7 +98,7 @@ class SemanticMatcher:
             similarity = float(r[-1])
             confidence = "high" if similarity > 0.8 else "medium" if similarity > 0.6 else "low"
             # print(confidence)
-            r = [val if isinstance(val, str) else str(r or "") for val in r]
+            r = [val if isinstance(val, str) else str(val or "") for val in r]
             results.append({
                 "product_id": r[0],
                 "material_name": r[1],
@@ -108,8 +108,9 @@ class SemanticMatcher:
                 "region": r[5],
                 "vendor": r[6],
                 "vat_rate": r[7],
-                "updated_at": r[8],
-                "source": r[9],
+                "quality_score": r[8],
+                "updated_at": r[9],
+                "source": r[10],
                 "similarity_score": str(round(similarity, 4)),
                 "confidence_tier": confidence
             })
