@@ -31,7 +31,12 @@ def retry(retries=3, delay=0, exceptions=(Exception,)):
         return wrapper
     return decorator
 
-
+def read_json(path: str):
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Config not found: {path}")
+    with open(path, 'r') as file:
+        data = json.load(file)
+    return data
 
 def load_yaml_config(path: str):
     p = Path(path)
