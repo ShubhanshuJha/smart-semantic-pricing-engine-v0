@@ -124,6 +124,39 @@ Captures:
 
 ### Design Decisions & Tradeoffs
 
+#### Why PostgreSQL + pgvector?
+
+We chose **PostgreSQL with the pgvector extension** as our vector database for the following reasons:
+
+* **Ecosystem maturity**: PostgreSQL is a production-ready, stable, and widely adopted RDBMS with strong tooling, replication, and ecosystem support. Using it avoids adding a separate vector-only store, reducing operational overhead.
+* **Unified storage**: Both structured metadata (price, VAT, vendor, region, updated_at, source URL) and unstructured embeddings (vectors from material_name + description) are stored in the same database. This enables efficient hybrid queries (e.g., "find the cheapest tiles in Île-de-France with similarity > 0.8").
+* **pgvector performance**: pgvector implements efficient approximate nearest-neighbor search and distance operators (<=> for cosine/euclidean distance). This ensures low latency (<500ms) even on 1,000+ records, with the ability to scale further via indexing (IVFFlat, HNSW).
+* **Alternatives considered**:
+   * Chroma: Lightweight and simple, but lacks enterprise-grade scaling and tight integration with relational queries.
+   * Weaviate: Rich semantic features, but adds infrastructure complexity and operational cost for a prototype.
+
+We chose pgvector to balance simplicity, robustness, and production feasibility.
+
+#### Why this Embedding Model?
+
+We embed **material_name + description** into dense vectors using a **state-of-the-art semantic embedding model**:
+
+* **OpenAI text-embedding-3-small / text-embedding-3-large**: Chosen for strong multilingual performance (English, French, etc.), critical since contractor queries may come in multiple languages. These models are robust at handling fuzzy, noisy, and real-world text input.
+
+* **Alternatives considered**:
+   * **BGE** (BAAI General Embeddings) and Instructor-XL: strong open-source models with good multilingual coverage, but they require GPU hosting and add operational overhead for inference.
+   * **Sentence-Transformers** (e.g., all-MiniLM-L6-v2): lightweight, but weaker multilingual and semantic accuracy compared to OpenAI’s latest models.
+
+* **Tradeoff**: OpenAI embeddings introduce API cost and dependency, but deliver **highest semantic accuracy with minimal latency** for this prototype. In production, we could hybridize: OpenAI for high-accuracy queries and a self-hosted open-source model for cost-sensitive workloads.
+
+##### Key Tradeoffs
+
+* Latency vs Accuracy: Chose higher-quality embeddings (OpenAI) to maximize semantic accuracy, while relying on pgvector indexing to keep latency <500ms.
+* Operational Complexity: Postgres with pgvector keeps architecture simpler vs adding Chroma/Weaviate.
+* Scalability: For >1M products, scaling Postgres horizontally and enabling ANN indexes will be necessary; fallback is migrating vector search to a specialized store if required.
+
+---
+
 | Aspect              | Decision & Justification                                                             |
 | ------------------- | ------------------------------------------------------------------------------------ |
 | Vector DB           | **Postgres + pgvector** → unified metadata + vectors, scales well, stable ecosystem. |
