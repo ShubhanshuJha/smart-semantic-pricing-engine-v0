@@ -49,8 +49,8 @@ INSERT_DATA_QUERY: str = f"""
     VAT_RATE = EXCLUDED.VAT_RATE,
     QUALITY_SCORE = EXCLUDED.QUALITY_SCORE,
     UPDATED_AT = EXCLUDED.UPDATED_AT,
-    SOURCE = EXCLUDED.SOURCE;
-    EMBEDDING = EXCLUDED.EMBEDDING,
+    SOURCE = EXCLUDED.SOURCE,
+    EMBEDDING = EXCLUDED.EMBEDDING;
 """
 
 
@@ -58,7 +58,7 @@ from sentence_transformers import SentenceTransformer
 
 
 # lightweight embedding model
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 def get_vector(data):
     if not data: return []
@@ -98,8 +98,8 @@ def main() -> None:
         )
         db_loader.execute_query(query=db_loader.INSERT_DATA_QUERY, params=values)
     print(f"✅ Database ingestion completed successfully into {db_config['dbname']}.{db_loader.TABLE_NAME}")
-    db_loader.preview_data(n=2)
-    db_loader.drop_table(mock=False)
+    # db_loader.preview_data(n=2)
+    # db_loader.drop_table(mock=False)
     db_loader.close()
 
 main()
