@@ -49,8 +49,8 @@ INSERT_DATA_QUERY: str = f"""
     VAT_RATE = EXCLUDED.VAT_RATE,
     QUALITY_SCORE = EXCLUDED.QUALITY_SCORE,
     UPDATED_AT = EXCLUDED.UPDATED_AT,
-    SOURCE = EXCLUDED.SOURCE;
-    EMBEDDING = EXCLUDED.EMBEDDING,
+    SOURCE = EXCLUDED.SOURCE,
+    EMBEDDING = EXCLUDED.EMBEDDING;
 """
 
 
@@ -58,7 +58,7 @@ from sentence_transformers import SentenceTransformer
 
 
 # lightweight embedding model
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 def get_vector(data):
     if not data: return []
