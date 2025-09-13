@@ -15,8 +15,9 @@ sys_path.append(os_path.realpath('../../'))
 sys_path.append(os_path.realpath('../'))
 sys_path.append(os_path.realpath('./'))
 
-from utils.operation_utils import load_yaml_config, write_json_data
+from utils.operation_utils import load_yaml_config, write_json_data, write_data
 from utils.request_utils import RequestUtils
+from contants import *
 
 
 class Scrapper:
@@ -80,6 +81,18 @@ class Scrapper:
         all_prod_urls = list(set(all_urls))
         print(f"(*) Few of the product URLs :{all_prod_urls[:5]}")
         return all_prod_urls
+    
+    def get_region_from_url(self, base_url: str) -> str:
+        netloc = urlparse(base_url).netloc.lower()
+        
+        if netloc.endswith(".fr"):
+            return "France"
+        elif netloc.endswith(".be"):
+            return "Belgium"
+        elif netloc.endswith(".it"):
+            return "Italy"
+        # extend with more mappings as needed
+        return "Unknown"
         
     def is_product_page(self, soup, url) -> bool:
         """
@@ -102,59 +115,18 @@ class Scrapper:
 
         return False
     
-    def normalize_price(self, price_str) -> dict:
-        """
-        Normalize French price text to {amount, currency, price_type}.
-        Handles: "29,90 €", "2,50 €/m²", "149 € / pack", "1 234,56 €"
-        """
-        if not price_str or not isinstance(price_str, str):
-            return {}
-        s = price_str.strip().replace("\xa0", " ").replace("\u202f", " ")
-        # extract first numeric token
-        m = re.search(r"([0-9\.\s,]+)", s)
-        if not m:
-            return {}
-        token = m.group(1)
-        # remove spaces and dots used as thousand separators, convert comma to dot
-        token = token.replace(" ", "").replace("\u00A0", "")
-        # If token contains both '.' and ',' assume '.' thousands, ',' decimals => remove '.' then replace ','
-        if "." in token and "," in token:
-            token = token.replace(".", "").replace(",", ".")
-        else:
-            token = token.replace(",", ".")
-        try:
-            amount = float(token)
-        except Exception:
-            return {}
-        currency = "EUR" if "€" in s else None
-        if "m²" in s or "/m" in s:
-            price_type = "per_m2"
-        elif "pack" in s or "/pack" in s:
-            price_type = "pack"
-        else:
-            price_type = "unit"
-        return {"amount": round(amount, 2), "currency": currency, "price_type": price_type}
-
-    def extract_measurement(self, text) -> dict:
-        if not text:
-            return {}
-        # look for unit patterns and a preceding number
-        m = re.search(r"(\d+(?:[.,]\d+)?)\s*(m²|m2|cm|mm|kg|g|l|ml|litre|litres|pack|unité|unites|unités)", text, re.IGNORECASE)
-        if m:
-            qty = m.group(1).replace(",", ".")
-            unit = m.group(2)
-            try:
-                qty_num = float(qty)
-            except Exception:
-                qty_num = None
-            return {"quantity": qty_num, "unit": unit.lower()}
-        return {}
+    def get_prices(self, data):
+        pattern = re.compile(r"(\d+[.,]?\d*)\s*€(?:\s*/\s*([A-Za-z0-9²]+))?")
+        matches = pattern.findall(data)
+        get_unit = lambda x: "/" + x.replace("soit", "").replace("Ajouter", "").replace("2", "\u00b2").replace("3", "\u00b3") if x else ""
+        return list(map(lambda x: x[0].strip(",").strip(".") + " €" + get_unit(x=x[1]), matches))
 
     def parse_product_page(self, url, guess_category=None) -> dict:
         """
         Fetch product URL and return structured dict per spec or None on failure.
         """
         try:
+            print(f'Exploring url: {url}')
             resp = self.request.get_data(url=url, delay=self.__get_delay())
             soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -196,79 +168,29 @@ class Scrapper:
                     break
             # Fallback: Try regex search in all text if still missing
             if not raw_price:
-                price_matches = re.findall(r"(\d+[.,]\d+)\s*€", soup.get_text())
+                price_matches = self.get_prices(data=soup.get_text())
                 if price_matches:
-                    raw_price = price_matches[0] + " €"
-
-            price = self.normalize_price(raw_price)
-
-
-            # brand
-            brand_el = soup.select_one("span[itemprop='brand'], .brand, [data-testid='brand'], .product-brand")
-            brand = brand_el.get_text(strip=True) if brand_el else None
-
-            # breadcrumbs -> category inference
-            crumbs = []
-            # try a variety of breadcrumb selectors
-            for sel in ("nav.breadcrumb li a", ".breadcrumb li a", ".breadcrumb a", ".breadcrumbs a"):
-                els = soup.select(sel)
-                if els:
-                    crumbs = [e.get_text(strip=True) for e in els if e.get_text(strip=True)]
-                    break
-            category = guess_category or (" > ".join(crumbs) if crumbs else None)
-
-            # measurement search in product name + description
-            desc_text = ""
-            desc_blocks = soup.select(".product-description, .pdp-description, #description, .description")
-            if desc_blocks:
-                desc_text = " ".join(b.get_text(" ", strip=True) for b in desc_blocks)
-            search_text = " ".join([t for t in (product_name or "", desc_text) if t])
-            measurement = self.extract_measurement(search_text)
-
-            # availability: look for text or existence of 'add to cart' CTA
-            availability = "unknown"
-            if soup.find(string=re.compile(r"en stock|disponible", re.IGNORECASE)):
-                availability = "in_stock"
-            elif soup.find(string=re.compile(r"rupture|indisponible|épuisé", re.IGNORECASE)):
-                availability = "out_of_stock"
-            elif soup.find(string=re.compile(r"précommande|preorder", re.IGNORECASE)):
-                availability = "preorder"
-
-            # image: prefer og:image, else first product image tag
-            img_meta = soup.select_one("meta[property='og:image'], meta[name='og:image']")
-            if img_meta and img_meta.has_attr("content"):
-                image_url = img_meta["content"]
-            else:
-                img_tag = soup.select_one(".product-media img, .product-image img, img")
-                image_url = img_tag.get("src") if img_tag and img_tag.has_attr("src") else None
+                    raw_price = price_matches
+            
+            price, price_unit = raw_price[0].split(" ")
 
             # build stable product_id from URL
             pid_hash = hashlib.md5(url.encode("utf-8")).hexdigest()
             product_id = f"{self.config['supplier']}|{pid_hash}"
 
             # final object - required fields
-            product = {
-                "product_id": product_id,
-                "supplier": self.config["supplier"],
-                "updated_at": datetime.utcnow().isoformat() + "Z",
-                "category": category,
-                "product_name": product_name,
-                "brand": brand,
-                "price": price,
-                "measurement": measurement,
-                "availability": availability,
-                "url": url,
-                "image_url": image_url,
-                "variations": [],  # left empty; could be populated by further parsing
-                "source": url,
-                "raw": {"price_str": raw_price},
-            }
+            description = None
+            region = self.get_region_from_url(self.config[next(filter(lambda x: "url" in x.lower(), self.config))])
+            vat_rate = None
+            quality_score = None
+            VALUES = [product_id, product_name, description, price, price_unit, region, self.config["supplier"].title(),
+                      vat_rate, quality_score, url]
+            product = dict(zip(PRODUCT_DATA_INGESTION_SCHEMA, VALUES))
 
             # Basic validation: required fields
-            if not product_name or not price or not url:
+            if not product_name or not raw_price or not url:
                 # Not a complete product: return empty dict to let caller skip
                 return {}
-
             return product
         except Exception as e:
             print(f"(*) Error in parse_product_page({url}) → {e}")
@@ -311,7 +233,7 @@ class Scrapper:
             prod = self.parse_product_page(loc, guess_category=None)
             if prod:
                 products.append(prod)
-                print(f"(*) Collected product: {prod['product_name'][:60]} -> {prod['url']}")
+                print(f"(*) Collected product: {prod['material_name'][:60]} -> {prod['source']}")
             else:
                 print(f"(*) Page looks like product but parsing incomplete for {loc}")
 
@@ -335,8 +257,8 @@ class Scrapper:
                 print(f"(*) Product limit {self.min_products} reached... Stopping fetching process...")
                 break
         file_name = f"../{self.config['output']['directory']}{self.config['supplier']}_materials.json"
-        output_path = write_json_data(data=final_list, path=file_name)
-        print(f"✅ Scraped {len(final_list)} products -> {output_path}")
+        output_path = write_json_data(data=final_list, path=file_name, mode='a')
+        print(f"✅ Ingested data for {len(final_list)} products -> {output_path}")
 
 
 def main() -> None:

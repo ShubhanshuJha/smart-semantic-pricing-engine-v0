@@ -9,6 +9,6 @@ sitemap_urls:
 
 output:
   directory: data/
-  min_products: 5  ### Controls the no. of products data to be fetched
+  min_products: 100  ### Controls the no. of products data to be fetched
 
 rate_limit_seconds: [0.5, 1.2]
