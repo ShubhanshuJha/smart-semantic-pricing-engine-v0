@@ -98,8 +98,8 @@ def main() -> None:
         )
         db_loader.execute_query(query=db_loader.INSERT_DATA_QUERY, params=values)
     print(f"✅ Database ingestion completed successfully into {db_config['dbname']}.{db_loader.TABLE_NAME}")
-    db_loader.preview_data(n=2)
-    db_loader.drop_table(mock=False)
+    # db_loader.preview_data(n=2)
+    # db_loader.drop_table(mock=False)
     db_loader.close()
 
 main()
