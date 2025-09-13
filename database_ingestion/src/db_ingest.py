@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import json
 from sys import path as sys_path
 from os import path as os_path
@@ -24,7 +25,9 @@ CREATE_TABLE_QUERY: str = f"""
         VENDOR VARCHAR(100),
         VAT_RATE VARCHAR(50),
         QUALITY_SCORE VARCHAR(50),
-        SOURCE TEXT
+        UPDATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        SOURCE TEXT,
+        EMBEDDING FLOAT[]
     );
 """
 INSERT_DATA_QUERY: str = f"""
@@ -33,8 +36,9 @@ INSERT_DATA_QUERY: str = f"""
         DESCRIPTION, UNIT_PRICE,
         UNIT, REGION,
         VENDOR, VAT_RATE,
-        QUALITY_SCORE, SOURCE
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        QUALITY_SCORE, UPDATED_AT,
+        SOURCE, EMBEDDING
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (PRODUCT_ID) DO UPDATE SET
     MATERIAL_NAME = EXCLUDED.MATERIAL_NAME,
     DESCRIPTION = EXCLUDED.DESCRIPTION,
@@ -44,10 +48,28 @@ INSERT_DATA_QUERY: str = f"""
     VENDOR = EXCLUDED.VENDOR,
     VAT_RATE = EXCLUDED.VAT_RATE,
     QUALITY_SCORE = EXCLUDED.QUALITY_SCORE,
+    UPDATED_AT = EXCLUDED.UPDATED_AT,
     SOURCE = EXCLUDED.SOURCE;
+    EMBEDDING = EXCLUDED.EMBEDDING,
 """
 
+
+from sentence_transformers import SentenceTransformer
+
+
+# lightweight embedding model
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def get_vector(data):
+    if not data: return []
+    # Generate embedding (as a numpy array)
+    vector = model.encode(data)
+    # Convert to Python list of floats
+    return vector.tolist()
+
 def main() -> None:
+    tz = timezone.utc
+    datetime_format = "%Y-%m-%d %H:%M:%S.%fZ"
     db_config_path = f"../configs/db_creds.json"
     db_config = read_json(path=db_config_path)
     print(f"(*) Config: {db_config}")
@@ -59,6 +81,7 @@ def main() -> None:
     db_loader = DBUtil(db_config=db_config, table_name=TABLE_NAME)
     db_loader.init_queries(CREATE_TABLE_QUERY=CREATE_TABLE_QUERY, INSERT_DATA_QUERY=INSERT_DATA_QUERY)
     for row in data:
+        vector = get_vector(row["material_name"] + ":" + (row["description"] or ""))
         values = (
             row["product_id"],
             row["material_name"],
@@ -69,12 +92,14 @@ def main() -> None:
             row["vendor"],
             row["vat_rate"],
             row["quality_score"],
-            row["source"]
+            datetime.now(timezone.utc).strftime(datetime_format),
+            row["source"],
+            vector
         )
         db_loader.execute_query(query=db_loader.INSERT_DATA_QUERY, params=values)
     print(f"✅ Database ingestion completed successfully into {db_config['dbname']}.{db_loader.TABLE_NAME}")
-    # db_loader.preview_data(n=2)
-    # db_loader.drop_table(mock=False)
+    db_loader.preview_data(n=2)
+    db_loader.drop_table(mock=False)
     db_loader.close()
 
 main()
