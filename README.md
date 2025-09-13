@@ -207,9 +207,8 @@ We embed **material_name + description** into dense vectors using a **state-of-t
 ### How to Run
 
 ```bash
-git clone https://github.com/ShubhanshuJha/donizo-material-scraper.git
-cd donizo-semantic-pricing
-pip install -r requirements.txt
+git clone https://github.com/ShubhanshuJha/smart-semantic-pricing-engine-v0.git
+cd smart-semantic-pricing-engine-v0
 ```
 
 * Start PostgreSQL with `pgvector` enabled.
