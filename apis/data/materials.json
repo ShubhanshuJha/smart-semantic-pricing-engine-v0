@@ -1,0 +1,8 @@
+{
+  "tiles_ceramic_m2": { "unit": "m2", "cost": 25.0 },
+  "toilet_standard": { "unit": "each", "cost": 120.0 },
+  "vanity_basic": { "unit": "each", "cost": 100.0 },
+  "paint_litre": { "unit": "litre", "cost": 12.0 },
+  "plumbing_parts": { "unit": "job", "cost": 150.0 },
+  "disposal_fee": { "unit": "job", "cost": 50.0 }
+}

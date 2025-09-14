@@ -1,0 +1,7 @@
+task_name,default_hours,default_material,default_qty,notes
+Floor Tiling (ceramic),3.5,tiles_ceramic_m2,4,Assumes small bathroom (4m2)
+Repaint Walls,4,paint_litre,5,Small bathroom wall repaint
+Shower Plumbing (redo),6,plumbing_parts,1,Redo plumbing for shower
+Replace Toilet,2,toilet_standard,1,Standard toilet replacement
+Install Vanity,2,vanity_basic,1,Basic vanity install
+Demolition & Disposal,2,disposal_fee,1,Remove tiles + disposal
