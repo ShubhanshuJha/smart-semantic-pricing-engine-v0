@@ -122,6 +122,40 @@ class SemanticMatcher:
 
         return results
 
+class FeedbackDB:
+    def __init__(self, db_client):
+        self.db_client = db_client
+
+    def save_feedback(self, data: dict):
+        try:
+            table_confirmation_query = """
+            CREATE TABLE IF NOT EXISTS Feedback (
+                id SERIAL PRIMARY KEY,
+                task_id VARCHAR(60) NOT NULL,
+                quote_id VARCHAR(60) NOT NULL,
+                user_type VARCHAR(50) NOT NULL CHECK (user_type IN ('contractor', 'client')),
+                verdict VARCHAR(255) NOT NULL,
+                comments TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+            """
+            self.db_client.execute_query(table_confirmation_query)
+            insert_query = """
+                INSERT INTO Feedback (task_id, quote_id, user_type, verdict, comments, created_at)
+            VALUES (%s, %s, %s, %s, %s, NOW())
+            """
+            params = [
+                data.get("task_id"),
+                data.get("quote_id"),
+                data.get("user_type"),
+                data.get("verdict"),
+                data.get("comments")
+            ]
+            self.db_client.execute_query(insert_query, params=params)
+            return {"status": "success", "message": "Feedback recorded"}
+        except Exception as ex:
+            return {"status": "fail", "message": f"Error -- {ex}"}
+
 
 # -----------------------------
 # FastAPI App
@@ -152,9 +186,23 @@ class MaterialMatchResponse(BaseModel):
     similarity_score: float
     confidence_tier: str
 
+class ProposalInvoiceRequest(BaseModel):
+    transcript: str
+
 class ProposalInvoiceResponse(BaseModel):
     tasks: list[dict]
     total_estimate: int
+
+class FeedbackRequest(BaseModel):
+    task_id: str
+    quote_id: str
+    user_type: str
+    verdict: str
+    comment: str
+
+class FeedbackResponse(BaseModel):
+    status: str
+    message: str
 
 
 def de_duplicate_products(items: list[dict]):
@@ -179,16 +227,16 @@ def get_material_price(query: str = Query(..., description="Contractor query"),
     return matcher.search(query, region=region, vendor=vendor, limit=limit)
 
 
-@app.get("/generate-proposal", response_model=ProposalInvoiceResponse)
-def get_proposal(transcript: str):
-    result = transcript_parser.parse(transcript)
+@app.post("/generate-proposal", response_model=ProposalInvoiceResponse)
+def get_proposal(request: ProposalInvoiceRequest):
+    result = transcript_parser.parse(request.transcript)
     print(f"{result = }")
     renovation_type = result.get('renovation_type', "Tile bathroom walls")
 
     final_margin_price = 0
     margin = 10
     total_hours, vat_rate, labor_cost = 0, 0, 0
-    pricing_engine_trans = parse_transcript(transcript)
+    pricing_engine_trans = parse_transcript(request.transcript)
     city = pricing_engine_trans["city"] or "Generic"
 
     for task in pricing_engine_trans["tasks"]:
@@ -218,4 +266,11 @@ def get_proposal(transcript: str):
         ],
         "total_estimate": math.ceil(sum(map(lambda p: float(p["unit_price"].replace(".", "").replace(",", ".")), prices)) + final_margin_price + labor_cost)
     }
+
+
+@app.post("/feedback", response_model=FeedbackResponse)
+def post_feedback(feedback: FeedbackRequest):
+    feedback_db = FeedbackDB(matcher.db_client)  # reuse DB client
+    result = feedback_db.save_feedback(feedback.dict())
+    return result
 
