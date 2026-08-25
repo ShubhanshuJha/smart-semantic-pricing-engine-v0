@@ -4,7 +4,7 @@ This project implements a **semantic material pricing engine** designed to handl
 
 The engine supports:
 
-* Fuzzy voice/text queries across multiple languages (incl. French).
+* Fuzzy voice/text queries across multiple languages (including French).
 * Material retrieval across vendors, units, and geographic regions.
 * Quote generation with VAT & contractor margin logic.
 * Feedback-driven confidence scoring that adapts over time.
