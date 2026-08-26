@@ -1,6 +1,6 @@
 # Donizo Smart Semantic Pricing Engine
 
-This project implements a **semantic material pricing engine** designed to handle chaotic, fuzzy, and multilingual contractor queries for renovation materials. It simulates the core logic of Donizo’s pricing brain, combining embeddings, vector search, VAT rules, margin protection, and adaptive feedback loops to produce accurate renovation quotes globally.
+This project implements a **semantic material pricing engine** designed to handle chaotic, fuzzy, and multi-lingual contractor queries for renovation materials. It simulates the core logic of Donizo’s pricing brain, combining embeddings, vector search, VAT rules, margin protection, and adaptive feedback loops to produce accurate renovation quotes globally.
 
 The engine supports:
 
